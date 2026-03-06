@@ -1,6 +1,9 @@
-import { auth } from "@/lib/auth"
+import NextAuth from "next-auth"
+import { authConfig } from "@/auth.config"
 import { NextResponse } from "next/server"
-import { UserRole } from "@prisma/client"
+import { UserRole } from "@/types/roles"
+
+const { auth } = NextAuth(authConfig)
 
 export default auth((req) => {
     const session = req.auth
