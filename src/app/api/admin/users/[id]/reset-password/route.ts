@@ -7,9 +7,10 @@ import { generateRandomPassword, hashPassword } from "@/utils/password"
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id: userId } = await context.params
     const session = await getSession()
 
     if (!session || !session.user || session.user.role !== UserRole.ADMIN) {
@@ -19,7 +20,6 @@ export async function POST(
       )
     }
 
-    const { id: userId } = params
     const body = await req.json().catch(() => ({}))
     const { newPassword } = body
 

@@ -10,9 +10,10 @@ const banSchema = z.object({
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { ownerId: string } }
+  context: { params: Promise<{ ownerId: string }> }
 ) {
   try {
+    const { ownerId } = await context.params
     const session = await getSession()
 
     if (!session || !session.user || session.user.role !== UserRole.ADMIN) {
@@ -22,7 +23,6 @@ export async function POST(
       )
     }
 
-    const { ownerId } = params
     const body = await req.json()
     const { isBanned } = banSchema.parse(body)
 

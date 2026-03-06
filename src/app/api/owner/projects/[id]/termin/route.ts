@@ -35,7 +35,7 @@ export async function POST(
     const project = await prisma.project.findFirst({
       where: {
         id,
-        ownerId: session.user.ownerId,
+        ownerId: session.user.ownerId!,
       },
     })
 
@@ -58,7 +58,7 @@ export async function POST(
           status: validatedData.status || "PENDING",
           paidDate: validatedData.status === "PAID" ? new Date() : null,
           projectId: id,
-          ownerId: session.user.ownerId,
+          ownerId: session.user.ownerId!,
         },
       })
 
@@ -75,7 +75,7 @@ export async function POST(
             unitPrice: validatedData.amount,
             budget: validatedData.amount, // Assume budget matched amount for termin
             projectId: id,
-            ownerId: session.user.ownerId,
+            ownerId: session.user.ownerId!,
             terminId: termin.id,
           },
         })

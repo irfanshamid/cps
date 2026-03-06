@@ -199,7 +199,7 @@ export default async function OwnerDashboardPage() {
                                     <div key={cf.id} className="flex items-center justify-between border-b pb-2 last:border-0 last:pb-0">
                                         <div>
                                             <p className="font-medium text-sm truncate max-w-[150px]">{cf.description || cf.category}</p>
-                                            <p className="text-xs text-muted-foreground">{new Date(cf.date).toLocaleDateString('id-ID')}</p>
+                                            <p className="text-xs text-muted-foreground">{new Date(cf.createdAt).toLocaleDateString('id-ID')}</p>
                                         </div>
                                         <div className={`text-sm font-semibold ${cf.type === 'IN' ? 'text-green-600' : 'text-red-600'}`}>
                                             {cf.type === 'IN' ? '+' : '-'} Rp {Number(cf.amount).toLocaleString('id-ID')}

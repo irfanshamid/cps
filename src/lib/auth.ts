@@ -73,7 +73,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                     role: token.role as UserRole,
                     ownerId: token.ownerId as string | null,
                     mustCompleteProfile: token.mustCompleteProfile as boolean,
-                }
+                } as any
             }
             return session
         },

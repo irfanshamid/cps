@@ -33,7 +33,7 @@ export async function PUT(
       where: {
         id: terminId,
         projectId: id,
-        ownerId: session.user.ownerId,
+        ownerId: session.user.ownerId!,
       },
       include: {
         cashflow: true,
@@ -85,7 +85,7 @@ export async function PUT(
               unitPrice: validatedData.amount,
               budget: validatedData.amount,
               projectId: id,
-              ownerId: session.user.ownerId,
+              ownerId: session.user.ownerId!,
               terminId: terminId,
             },
           })

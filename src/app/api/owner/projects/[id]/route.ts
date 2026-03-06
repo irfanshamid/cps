@@ -15,9 +15,10 @@ const projectSchema = z.object({
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await context.params
     const session = await getSession()
 
     if (!session || !session.user || session.user.role !== UserRole.OWNER || !session.user.ownerId) {
@@ -29,7 +30,7 @@ export async function GET(
 
     const project = await prisma.project.findFirst({
       where: {
-        id: params.id,
+        id,
         ownerId: session.user.ownerId,
       },
     })
@@ -52,9 +53,10 @@ export async function GET(
 
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await context.params
     const session = await getSession()
 
     if (!session || !session.user || session.user.role !== UserRole.OWNER || !session.user.ownerId) {
@@ -70,7 +72,7 @@ export async function PUT(
     // Check if project exists and belongs to owner
     const existingProject = await prisma.project.findFirst({
       where: {
-        id: params.id,
+        id,
         ownerId: session.user.ownerId,
       },
     })
@@ -83,7 +85,7 @@ export async function PUT(
     }
 
     const project = await prisma.project.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         ...(validatedData.name && { name: validatedData.name }),
         ...(validatedData.description !== undefined && { description: validatedData.description }),
@@ -104,7 +106,7 @@ export async function PUT(
     const isOverBudget = spent > budget
 
     await prisma.project.update({
-      where: { id: params.id },
+      where: { id },
       data: { isOverBudget },
     })
 
@@ -126,9 +128,10 @@ export async function PUT(
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await context.params
     const session = await getSession()
 
     if (!session || !session.user || session.user.role !== UserRole.OWNER || !session.user.ownerId) {
@@ -141,7 +144,7 @@ export async function DELETE(
     // Check if project exists and belongs to owner
     const project = await prisma.project.findFirst({
       where: {
-        id: params.id,
+        id,
         ownerId: session.user.ownerId,
       },
     })
@@ -155,7 +158,7 @@ export async function DELETE(
 
     // Delete project (cascade will handle related records)
     await prisma.project.delete({
-      where: { id: params.id },
+      where: { id },
     })
 
     return NextResponse.json({ success: true })
