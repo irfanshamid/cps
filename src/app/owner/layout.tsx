@@ -27,6 +27,7 @@ import {
   Settings,
   ListTodo,
   HardHat,
+  BookOpen,
 } from 'lucide-react';
 
 type OwnerLayoutProps = {
@@ -63,6 +64,11 @@ const ownerMenu = [
     label: 'Staff',
     href: '/owner/staff',
     icon: Users,
+  },
+  {
+    label: 'SOP & Template',
+    href: '/owner/sop',
+    icon: BookOpen,
   },
   {
     label: 'Pengaturan',
