@@ -1,0 +1,329 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  OWNER
+  STAFF
+}
+
+enum CashflowType {
+  IN
+  OUT
+}
+
+enum ProjectStatus {
+  PLANNING
+  ACTIVE
+  ON_HOLD
+  COMPLETED
+  CANCELLED
+}
+
+enum TerminStatus {
+  PENDING
+  APPROVED
+  PAID
+  REJECTED
+}
+
+enum AttendanceStatus {
+  PRESENT
+  LATE
+  ABSENT
+  SICK
+  LEAVE
+}
+
+enum CashflowStatus {
+  AMAN
+  WASPADA
+  DEFISIT
+}
+
+// ============================================
+// USER & AUTHENTICATION
+// ============================================
+
+model User {
+  id                  String    @id @default(cuid())
+  username            String    @unique
+  password            String    // hashed password
+  role                UserRole
+  ownerId             String?   // nullable for ADMIN, required for STAFF and OWNER
+  position            String?   // Jabatan/Posisi (e.g. Mandor, Tukang, Staff Admin)
+  isActive            Boolean   @default(true)
+  mustCompleteProfile Boolean   @default(false)
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  // Relations
+  owner               Owner?    @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  attendances         Attendance[]
+  tasks               Task[]
+  projectTeams        ProjectTeam[]
+
+  @@index([username])
+  @@index([role])
+  @@index([ownerId])
+}
+
+// ============================================
+// OWNER PROFILE
+// ============================================
+
+model Owner {
+  id              String   @id @default(cuid())
+  companyName     String?
+  ownerName       String?
+  email           String?  @unique
+  phone           String?
+  address         String?
+  companyLogo     String?  // URL to logo
+  isBanned        Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  users           User[]   // Users dengan role OWNER atau STAFF yang terhubung
+  projects        Project[]
+  cashflows       Cashflow[]
+  rabs            RAB[]
+  termins         Termin[]
+  earlyWarnings   EarlyWarning[]
+  tasks           Task[]
+
+  @@index([email])
+}
+
+// ============================================
+// PROJECT MANAGEMENT
+// ============================================
+
+model Project {
+  id              String        @id @default(cuid())
+  name            String
+  description     String?
+  status          ProjectStatus @default(PLANNING)
+  startDate       DateTime?
+  endDate         DateTime?
+  budget          Decimal       @default(0) @db.Decimal(15, 2)
+  spent           Decimal       @default(0) @db.Decimal(15, 2)
+  isOverBudget    Boolean       @default(false)
+  ownerId         String
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  // Relations
+  owner           Owner         @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  rabs            RAB[]
+  cashflows       Cashflow[]
+  termins         Termin[]
+  earlyWarnings   EarlyWarning[]
+  tasks           Task[]
+  teams           ProjectTeam[]
+
+  @@index([ownerId])
+  @@index([status])
+}
+
+// ============================================
+// RAB (Rencana Anggaran Biaya) / BUDGET
+// ============================================
+
+model RAB {
+  id              String   @id @default(cuid())
+  name            String
+  description     String?
+  category        String?
+  quantity        Decimal? @db.Decimal(10, 2)
+  unit            String?
+  frequency       String?
+  remarks         String?
+  budget          Decimal  @db.Decimal(15, 2)
+  unitPrice       Decimal? @db.Decimal(15, 2)
+  realUnitPrice   Decimal? @db.Decimal(15, 2)
+  spent           Decimal  @default(0) @db.Decimal(15, 2)
+  isOverBudget    Boolean  @default(false)
+  projectId       String
+  ownerId         String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  project         Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  owner           Owner    @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([ownerId])
+}
+
+// ============================================
+// CASHFLOW MANAGEMENT
+// ============================================
+
+model Cashflow {
+  id          String        @id @default(cuid())
+  type        CashflowType
+  amount      Decimal       @db.Decimal(15, 2)
+  description String?
+  category    String?
+  quantity    Decimal?      @db.Decimal(10, 2)
+  unit        String?
+  unitPrice   Decimal?      @db.Decimal(15, 2)
+  budget      Decimal?      @db.Decimal(15, 2)
+  projectId   String?
+  ownerId     String
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  
+  // Relations
+  project     Project?      @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  owner       Owner         @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  termin      Termin?       @relation(fields: [terminId], references: [id], onDelete: SetNull)
+  terminId    String?       @unique
+
+  @@index([ownerId])
+  @@index([projectId])
+  @@index([type])
+  @@index([createdAt])
+}
+
+// ============================================
+// TERMIN PAYMENT SYSTEM
+// ============================================
+
+model Termin {
+  id          String        @id @default(cuid())
+  name        String
+  description String?
+  amount      Decimal       @db.Decimal(15, 2)
+  percentage  Decimal?     @db.Decimal(5, 2) // percentage of total project
+  status      TerminStatus @default(PENDING)
+  dueDate     DateTime?
+  paidDate    DateTime?
+  projectId   String
+  ownerId     String
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  // Relations
+  project     Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  owner       Owner        @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  cashflow    Cashflow?
+
+  @@index([projectId])
+  @@index([ownerId])
+  @@index([status])
+}
+
+// ============================================
+// ATTENDANCE / PRESENSI
+// ============================================
+
+model Attendance {
+  id          String          @id @default(cuid())
+  userId      String
+  date        DateTime        @default(now())
+  checkIn     DateTime?
+  checkOut    DateTime?
+  status      AttendanceStatus @default(PRESENT)
+  notes       String?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  // Relations
+  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date])
+  @@index([userId])
+  @@index([date])
+}
+
+// ============================================
+// EARLY WARNING SYSTEM
+// ============================================
+
+model EarlyWarning {
+  id              String         @id @default(cuid())
+  projectId       String
+  ownerId         String
+  message         String
+  predictedDeficit Decimal       @db.Decimal(15, 2)
+  daysUntilDeficit Int
+  burnRate30Days  Decimal        @db.Decimal(15, 2)
+  obligations30Days Decimal      @db.Decimal(15, 2)
+  currentBalance  Decimal        @db.Decimal(15, 2)
+  isResolved      Boolean        @default(false)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  // Relations
+  project         Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  owner           Owner          @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([ownerId])
+  @@index([isResolved])
+}
+
+// ============================================
+// TASK / PROGRESS MANAGEMENT
+// ============================================
+
+model Task {
+  id          String    @id @default(cuid())
+  title       String
+  description String?   @db.Text
+  progress    Int       @default(0) // 0-100
+  deadline    DateTime?
+  
+  // Relations
+  projectId   String
+  project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  picId       String?   // Person In Charge (Staff)
+  pic         User?     @relation(fields: [picId], references: [id], onDelete: SetNull)
+  
+  picNote     String?   @db.Text // Catatan PIC
+  
+  ownerId     String
+  owner       Owner     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([projectId])
+  @@index([picId])
+  @@index([ownerId])
+}
+
+// ============================================
+// PROJECT TEAM MANAGEMENT
+// ============================================
+
+model ProjectTeam {
+  id        String   @id @default(cuid())
+  projectId String
+  userId    String
+  role      String?  // Optional: Role in this specific project
+  
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([projectId, userId])
+  @@index([projectId])
+  @@index([userId])
+}
