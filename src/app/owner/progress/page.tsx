@@ -3,13 +3,11 @@ import { getSession } from "@/lib/session"
 import { redirect } from "next/navigation"
 import { UserRole } from "@prisma/client"
 import { prisma } from "@/lib/prisma"
-import { Header } from "@/components/layout/header"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Plus, ListTodo } from "lucide-react"
 import { TaskList } from "@/components/owner/task-list"
 import { AddTaskButton } from "@/components/owner/add-task-button"
-import { SidebarProvider } from "@/components/ui/sidebar"
 
 export default async function OwnerProgressPage() {
   const session = await getSession()
@@ -41,21 +39,19 @@ export default async function OwnerProgressPage() {
   })
 
   return (
-    <SidebarProvider defaultOpen={false}>
-      <div className="min-h-screen bg-background w-full">
-        <Header />
-        <main className="container mx-auto p-6">
-          <div className="mb-6 flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold">Management Progress</h1>
-              <p className="text-muted-foreground">
-                Pantau kemajuan pekerjaan proyek
-              </p>
-            </div>
-            <AddTaskButton projects={projects} staff={staff} />
+    <div className="min-h-screen bg-background w-full">
+      <main className="container mx-auto p-6">
+        <div className="mb-6 flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold">Management Progress</h1>
+            <p className="text-muted-foreground">
+              Pantau kemajuan pekerjaan proyek
+            </p>
           </div>
+          <AddTaskButton projects={projects} staff={staff} />
+        </div>
 
-          <Card>
+        <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <ListTodo className="h-5 w-5" />
@@ -77,6 +73,5 @@ export default async function OwnerProgressPage() {
           </Card>
         </main>
       </div>
-    </SidebarProvider>
   )
 }

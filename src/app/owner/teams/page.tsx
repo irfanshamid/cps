@@ -3,12 +3,10 @@ import { getSession } from "@/lib/session"
 import { redirect } from "next/navigation"
 import { UserRole } from "@prisma/client"
 import { prisma } from "@/lib/prisma"
-import { Header } from "@/components/layout/header"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { HardHat, ArrowRight, Users } from "lucide-react"
 import Link from "next/link"
-import { SidebarProvider } from "@/components/ui/sidebar"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 
 function getInitials(name: string): string {
@@ -47,18 +45,16 @@ export default async function OwnerTeamsPage() {
   })
 
   return (
-    <SidebarProvider defaultOpen={false}>
-      <div className="min-h-screen bg-background w-full">
-        <Header />
-        <main className="container mx-auto p-6">
-          <div className="mb-6">
-            <h1 className="text-3xl font-bold">Tim Lapangan</h1>
-            <p className="text-muted-foreground">
-              Kelola penugasan staff ke proyek
-            </p>
-          </div>
+    <div className="min-h-screen bg-background w-full">
+      <main className="container mx-auto p-6">
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold">Tim Lapangan</h1>
+          <p className="text-muted-foreground">
+            Kelola penugasan staff ke proyek
+          </p>
+        </div>
 
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {projects.map((project) => (
               <Card key={project.id} className="flex flex-col">
                 <CardHeader>
@@ -105,8 +101,7 @@ export default async function OwnerTeamsPage() {
               </div>
             )}
           </div>
-        </main>
-      </div>
-    </SidebarProvider>
+      </main>
+    </div>
   )
 }

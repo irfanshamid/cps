@@ -2,7 +2,6 @@ import { getSession } from '@/lib/session';
 import { redirect } from 'next/navigation';
 import { UserRole } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
-import { Header } from '@/components/layout/header';
 import {
   Card,
   CardContent,
@@ -15,7 +14,6 @@ import { Badge } from '@/components/ui/badge';
 import { FolderKanban, Plus, AlertTriangle, ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
 import { format } from 'date-fns';
-import { SidebarProvider } from "@/components/ui/sidebar"
 
 export default async function OwnerProjectsPage() {
   const session = await getSession();

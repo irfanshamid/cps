@@ -3,7 +3,6 @@ import { getSession } from "@/lib/session"
 import { redirect } from "next/navigation"
 import { UserRole } from "@prisma/client"
 import { prisma } from "@/lib/prisma"
-import { Header } from "@/components/layout/header"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { ChevronLeft, Users } from "lucide-react"
@@ -11,7 +10,6 @@ import Link from "next/link"
 import { TeamList } from "@/components/owner/team-list"
 import { AddTeamMemberDialog } from "@/components/owner/add-team-member-dialog"
 import { AddTeamMemberButton } from "@/components/owner/add-team-member-button"
-import { SidebarProvider } from "@/components/ui/sidebar"
 
 export default async function ProjectTeamPage({
   params,
@@ -60,12 +58,10 @@ export default async function ProjectTeamPage({
   const existingMemberIds = members.map(m => m.userId)
 
   return (
-    <SidebarProvider defaultOpen={false}>
-      <div className="min-h-screen bg-background w-full">
-        <Header />
-        <main className="container mx-auto p-6 max-w-4xl">
-          <div className="mb-6 flex items-center justify-between">
-            <div className="flex items-center gap-4">
+    <div className="min-h-screen bg-background w-full">
+      <main className="container mx-auto p-6 max-w-4xl">
+        <div className="mb-6 flex items-center justify-between">
+          <div className="flex items-center gap-4">
               <Link href={`/owner/projects/${project.id}`}>
                 <Button variant="ghost" size="icon">
                   <ChevronLeft className="h-4 w-4" />
@@ -107,6 +103,5 @@ export default async function ProjectTeamPage({
           </Card>
         </main>
       </div>
-    </SidebarProvider>
   )
 }

@@ -2,7 +2,6 @@ import { getSession } from '@/lib/session';
 import { redirect } from 'next/navigation';
 import { UserRole } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
-import { Header } from '@/components/layout/header';
 import {
   Card,
   CardContent,
@@ -16,7 +15,6 @@ import { AlertTriangle, Edit, Trash2, ArrowRight, ShieldCheck, ListTodo, Users }
 import Link from 'next/link';
 import { format } from 'date-fns';
 import { ProjectActions } from '@/components/owner/project-actions';
-import { SidebarProvider } from "@/components/ui/sidebar"
 
 export default async function ProjectDetailPage({
   params,
@@ -101,13 +99,11 @@ export default async function ProjectDetailPage({
   const isOverBudget = totalReal > budget || totalRab > budget;
 
   return (
-    <SidebarProvider defaultOpen={false}>
-      <div className="min-h-screen bg-background w-full">
-        <Header />
-        <main className="container mx-auto p-6">
-          <div className="mb-6 flex items-center justify-between">
-            <div>
-              <div className="flex items-center gap-3">
+    <div className="min-h-screen bg-background w-full">
+      <main className="container mx-auto p-6">
+        <div className="mb-6 flex items-center justify-between">
+          <div>
+            <div className="flex items-center gap-3">
                   <h1 className="text-3xl font-bold">{project.name}</h1>
                   {isSafe ? (
                       <Badge className="bg-green-100 text-green-700 hover:bg-green-100 border-green-200">
@@ -318,6 +314,5 @@ export default async function ProjectDetailPage({
           </div>
         </main>
       </div>
-    </SidebarProvider>
   );
 }
