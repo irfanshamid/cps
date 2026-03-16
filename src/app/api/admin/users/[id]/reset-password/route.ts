@@ -41,7 +41,7 @@ export async function POST(
 
     // Update password and force profile completion
     await prisma.user.update({
-      where: { id },
+      where: { id: userId },
       data: {
         password: hashedPassword,
         mustCompleteProfile: true, // Force re-onboarding after reset
@@ -53,9 +53,11 @@ export async function POST(
       username: user.username,
       password, // Return plain password untuk ditampilkan
     })
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorMessage =
+      error instanceof Error ? error.message : "Internal server error"
     return NextResponse.json(
-      { message: error.message || "Internal server error" },
+      { message: errorMessage },
       { status: 500 }
     )
   }
