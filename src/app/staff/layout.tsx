@@ -45,8 +45,6 @@ const staffMenu = [
 
 import Image from 'next/image';
 
-// ...
-
 export default function StaffLayout({ children }: StaffLayoutProps) {
   const pathname = usePathname();
 

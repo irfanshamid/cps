@@ -41,7 +41,13 @@ export async function POST(req: NextRequest) {
 
     // Create owner record first
     const owner = await prisma.owner.create({
-      data: {},
+      data: {
+        companyName: "",
+        ownerName: "",
+        email: "",
+        phone: "",
+        address: "",
+      },
     })
 
     // Create user with OWNER role

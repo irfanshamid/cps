@@ -23,6 +23,9 @@ export const authConfig = {
                 if (typeof session.mustCompleteProfile === "boolean") {
                     token.mustCompleteProfile = session.mustCompleteProfile
                 }
+                if (session.ownerId) {
+                    token.ownerId = session.ownerId
+                }
             }
 
             return token

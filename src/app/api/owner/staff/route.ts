@@ -104,7 +104,7 @@ export async function POST(req: NextRequest) {
         role: UserRole.STAFF,
         ownerId: session.user.ownerId,
         isActive: true,
-        mustCompleteProfile: false,
+        mustCompleteProfile: true, // Staff must also complete profile
       },
     })
 

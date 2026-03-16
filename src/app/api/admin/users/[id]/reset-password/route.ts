@@ -39,10 +39,13 @@ export async function POST(
     const password = newPassword || generateRandomPassword(12)
     const hashedPassword = await hashPassword(password)
 
-    // Update password
+    // Update password and force profile completion
     await prisma.user.update({
-      where: { id: userId },
-      data: { password: hashedPassword },
+      where: { id },
+      data: {
+        password: hashedPassword,
+        mustCompleteProfile: true, // Force re-onboarding after reset
+      },
     })
 
     return NextResponse.json({

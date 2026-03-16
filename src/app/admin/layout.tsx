@@ -40,8 +40,6 @@ const adminMenu = [
 
 import Image from 'next/image';
 
-// ...
-
 export default function AdminLayout({ children }: AdminLayoutProps) {
   const pathname = usePathname();
 

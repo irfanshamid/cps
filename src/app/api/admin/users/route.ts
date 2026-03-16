@@ -93,12 +93,29 @@ export async function POST(req: NextRequest) {
     const plainPassword = password || generateRandomPassword(12)
     const hashedPassword = await hashPassword(plainPassword)
 
+    // Handle OWNER creation - need an owner record
+    let ownerId = null
+    if (role === "OWNER") {
+      const owner = await prisma.owner.create({
+        data: {
+          companyName: "",
+          ownerName: "",
+          email: "",
+          phone: "",
+          address: "",
+        },
+      })
+      ownerId = owner.id
+    }
+
     const user = await prisma.user.create({
       data: {
         username,
         role,
         password: hashedPassword,
         isActive: true,
+        mustCompleteProfile: true, // New users must complete profile
+        ownerId, // Link to owner record if created
       },
     })
 

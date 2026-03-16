@@ -79,8 +79,6 @@ const ownerMenu = [
 
 import Image from 'next/image';
 
-// ...
-
 export default function OwnerLayout({ children }: OwnerLayoutProps) {
   const pathname = usePathname();
 

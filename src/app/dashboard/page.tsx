@@ -1,26 +1,26 @@
-import { redirect } from "next/navigation"
-import { getSession } from "@/lib/session"
-import { UserRole } from "@prisma/client"
+import { redirect } from 'next/navigation';
+import { getSession } from '@/lib/session';
+import { UserRole } from '@/types/roles';
 
 export default async function DashboardPage() {
-  const session = await getSession()
+  const session = await getSession();
 
   if (!session || !session.user) {
-    redirect("/login")
+    redirect('/login');
   }
 
   // Redirect berdasarkan role
   switch (session.user.role) {
     case UserRole.ADMIN:
-      redirect("/admin/dashboard")
+      redirect('/admin/dashboard');
     case UserRole.OWNER:
       if (session.user.mustCompleteProfile) {
-        redirect("/onboarding")
+        redirect('/onboarding');
       }
-      redirect("/owner/dashboard")
+      redirect('/owner/dashboard');
     case UserRole.STAFF:
-      redirect("/staff/dashboard")
+      redirect('/staff/dashboard');
     default:
-      redirect("/login")
+      redirect('/login');
   }
 }

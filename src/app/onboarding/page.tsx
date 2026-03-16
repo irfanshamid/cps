@@ -1,84 +1,107 @@
-"use client"
+'use client';
 
-import { useState } from "react"
-import { useSession } from "next-auth/react"
-import { useRouter } from "next/navigation"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { toast } from "sonner"
-import { Loader2 } from "lucide-react"
+import { useState } from 'react';
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { toast } from 'sonner';
+import { Loader2 } from 'lucide-react';
 
 export default function OnboardingPage() {
-  const { update } = useSession()
-  const router = useRouter()
-  const [loading, setLoading] = useState(false)
+  const { data: session, update } = useSession();
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
-    companyName: "",
-    ownerName: "",
-    email: "",
-    phone: "",
-    address: "",
-  })
+    companyName: '',
+    ownerName: '',
+    email: '',
+    phone: '',
+    address: '',
+  });
+
+  const isOwner = session?.user?.role === 'OWNER';
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
+    e.preventDefault();
+    setLoading(true);
 
     try {
-      const response = await fetch("/api/owner/complete-profile", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const response = await fetch('/api/owner/complete-profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
-      })
+      });
 
+      const data = await response.json();
       if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.message || "Gagal menyimpan profil")
+        throw new Error(data.message || 'Gagal menyimpan profil');
       }
 
-      toast.success("Profil berhasil disimpan!")
-      await update({ mustCompleteProfile: false })
-      router.push("/owner/dashboard")
-      router.refresh()
+      toast.success('Profil berhasil disimpan!');
+
+      // Update session and wait for it
+      await update({
+        mustCompleteProfile: false,
+        ownerId: data.ownerId,
+      });
+
+      // Small delay to ensure cookie is written
+      setTimeout(() => {
+        window.location.href = '/dashboard';
+      }, 500);
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "Terjadi kesalahan"
-      toast.error(errorMessage)
+      const errorMessage =
+        error instanceof Error ? error.message : 'Terjadi kesalahan';
+      toast.error(errorMessage);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 p-4">
       <Card className="w-full max-w-2xl">
         <CardHeader>
           <CardTitle className="text-2xl font-bold">
-            Lengkapi Profil Perusahaan
+            {isOwner ? 'Lengkapi Profil Perusahaan' : 'Lengkapi Profil Anda'}
           </CardTitle>
           <CardDescription>
-            Silakan isi data profil perusahaan Anda sebelum melanjutkan
+            {isOwner
+              ? 'Silakan isi data profil perusahaan Anda sebelum melanjutkan'
+              : 'Silakan lengkapi data diri Anda sebelum melanjutkan'}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="companyName">Nama Perusahaan *</Label>
-              <Input
-                id="companyName"
-                value={formData.companyName}
-                onChange={(e) =>
-                  setFormData({ ...formData, companyName: e.target.value })
-                }
-                required
-                disabled={loading}
-              />
-            </div>
+            {isOwner && (
+              <div className="space-y-2">
+                <Label htmlFor="companyName">Nama Perusahaan *</Label>
+                <Input
+                  id="companyName"
+                  value={formData.companyName}
+                  onChange={(e) =>
+                    setFormData({ ...formData, companyName: e.target.value })
+                  }
+                  required
+                  disabled={loading}
+                />
+              </div>
+            )}
 
             <div className="space-y-2">
-              <Label htmlFor="ownerName">Nama Owner *</Label>
+              <Label htmlFor="ownerName">
+                {isOwner ? 'Nama Owner *' : 'Nama Lengkap *'}
+              </Label>
               <Input
                 id="ownerName"
                 value={formData.ownerName}
@@ -139,12 +162,12 @@ export default function OnboardingPage() {
                   Menyimpan...
                 </>
               ) : (
-                "Simpan & Lanjutkan"
+                'Simpan & Lanjutkan'
               )}
             </Button>
           </form>
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

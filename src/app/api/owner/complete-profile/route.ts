@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getSession } from "@/lib/session"
-import { UserRole } from "@prisma/client"
+import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { z } from "zod"
 
@@ -14,9 +13,9 @@ const profileSchema = z.object({
 
 export async function POST(req: NextRequest) {
   try {
-    const session = await getSession()
+    const session = await auth()
 
-    if (!session || !session.user || session.user.role !== UserRole.OWNER || !session.user.ownerId) {
+    if (!session || !session.user) {
       return NextResponse.json(
         { message: "Unauthorized" },
         { status: 401 }
@@ -26,34 +25,62 @@ export async function POST(req: NextRequest) {
     const body = await req.json()
     const validatedData = profileSchema.parse(body)
 
-    // Update or create owner profile
-    const owner = await prisma.owner.upsert({
-      where: { id: session.user.ownerId },
-      update: {
-        companyName: validatedData.companyName,
-        ownerName: validatedData.ownerName,
-        email: validatedData.email,
-        phone: validatedData.phone,
-        address: validatedData.address,
-      },
-      create: {
-        id: session.user.ownerId,
-        companyName: validatedData.companyName,
-        ownerName: validatedData.ownerName,
-        email: validatedData.email,
-        phone: validatedData.phone,
-        address: validatedData.address,
-      },
-    })
+    // Handle OWNER role (update owner profile)
+    if (String(session.user.role) === "OWNER") {
+      let ownerId = session.user.ownerId
 
-    // Update user to mark profile as complete
-    await prisma.user.update({
+      // If ownerId is missing, create it now
+      if (!ownerId) {
+        const owner = await prisma.owner.create({
+          data: {
+            companyName: validatedData.companyName,
+            ownerName: validatedData.ownerName,
+            email: validatedData.email,
+            phone: validatedData.phone,
+            address: validatedData.address,
+          },
+        })
+        ownerId = owner.id
+        
+        // Link user to this new owner
+        await prisma.user.update({
+          where: { id: session.user.id },
+          data: { ownerId },
+        })
+      } else {
+        await prisma.owner.upsert({
+          where: { id: ownerId },
+          update: {
+            companyName: validatedData.companyName,
+            ownerName: validatedData.ownerName,
+            email: validatedData.email,
+            phone: validatedData.phone,
+            address: validatedData.address,
+          },
+          create: {
+            id: ownerId,
+            companyName: validatedData.companyName,
+            ownerName: validatedData.ownerName,
+            email: validatedData.email,
+            phone: validatedData.phone,
+            address: validatedData.address,
+          },
+        })
+      }
+    }
+
+    // Update user to mark profile as complete for ALL roles
+    const updatedUser = await prisma.user.update({
       where: { id: session.user.id },
       data: { mustCompleteProfile: false },
     })
 
-    return NextResponse.json({ success: true, owner })
-  } catch (error: any) {
+    return NextResponse.json({ 
+      success: true, 
+      ownerId: updatedUser.ownerId,
+      mustCompleteProfile: false 
+    })
+  } catch (error: unknown) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { message: error.errors[0].message },
@@ -61,8 +88,9 @@ export async function POST(req: NextRequest) {
       )
     }
 
+    const errorMessage = error instanceof Error ? error.message : "Internal server error"
     return NextResponse.json(
-      { message: error.message || "Internal server error" },
+      { message: errorMessage },
       { status: 500 }
     )
   }

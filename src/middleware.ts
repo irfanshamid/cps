@@ -8,41 +8,43 @@ const { auth } = NextAuth(authConfig)
 export default auth((req) => {
     const session = req.auth
     const pathname = req.nextUrl.pathname
+    
+    const isAuthPage = pathname.startsWith("/login")
+    const isOnboardingPage = pathname.startsWith("/onboarding")
+    const isPublicPage = pathname === "/" || pathname.startsWith("/unauthorized")
+    const isApiRoute = pathname.startsWith("/api")
 
+    // 1. Let API and Public pages through
+    if (isApiRoute || isPublicPage) return NextResponse.next()
+
+    // 2. Unauthenticated
     if (!session) {
+        if (isAuthPage) return NextResponse.next()
         return NextResponse.redirect(new URL("/login", req.url))
     }
 
-    // Check if user needs to complete profile (OWNER only)
-    if (
-        session.user.role === UserRole.OWNER &&
-        session.user.mustCompleteProfile &&
-        !pathname.startsWith("/onboarding")
-    ) {
+    // 3. Authenticated on Auth pages
+    if (isAuthPage) {
+        return NextResponse.redirect(new URL("/dashboard", req.url))
+    }
+
+    // 4. Role-based Route Protection (The most important part)
+    if (pathname.startsWith("/admin") && session.user.role !== UserRole.ADMIN) {
+        return NextResponse.redirect(new URL("/unauthorized", req.url))
+    }
+    if (pathname.startsWith("/owner") && session.user.role !== UserRole.OWNER) {
+        return NextResponse.redirect(new URL("/unauthorized", req.url))
+    }
+    if (pathname.startsWith("/staff") && session.user.role !== UserRole.STAFF) {
+        return NextResponse.redirect(new URL("/unauthorized", req.url))
+    }
+
+    // 5. Mandatory Onboarding Check (Only if not already on the page)
+    if (session.user.mustCompleteProfile && !isOnboardingPage) {
         return NextResponse.redirect(new URL("/onboarding", req.url))
     }
-
-    // Role-based route protection
-    if (pathname.startsWith("/admin")) {
-        if (session.user.role !== UserRole.ADMIN) {
-            return NextResponse.redirect(new URL("/unauthorized", req.url))
-        }
-    }
-
-    if (pathname.startsWith("/owner")) {
-        if (session.user.role !== UserRole.OWNER) {
-            return NextResponse.redirect(new URL("/unauthorized", req.url))
-        }
-        // Owner must complete profile first
-        if (session.user.mustCompleteProfile) {
-            return NextResponse.redirect(new URL("/onboarding", req.url))
-        }
-    }
-
-    if (pathname.startsWith("/staff")) {
-        if (session.user.role !== UserRole.STAFF) {
-            return NextResponse.redirect(new URL("/unauthorized", req.url))
-        }
+    if (!session.user.mustCompleteProfile && isOnboardingPage) {
+        return NextResponse.redirect(new URL("/dashboard", req.url))
     }
 
     return NextResponse.next()
@@ -50,9 +52,6 @@ export default auth((req) => {
 
 export const config = {
     matcher: [
-        "/admin/:path*",
-        "/owner/:path*",
-        "/staff/:path*",
-        "/onboarding/:path*",
+        "/((?!api|_next/static|_next/image|favicon.ico|brand.png|favicon.png).*)",
     ],
 }
