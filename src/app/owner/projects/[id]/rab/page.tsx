@@ -7,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { RabAddDialog } from "@/components/owner/rab-add-dialog"
 import { RABTable } from "@/components/owner/rab-table"
 import { Button } from "@/components/ui/button"
-import { ChevronLeft } from "lucide-react"
+import { ChevronLeft, Download } from "lucide-react"
 import Link from "next/link"
 
 export default async function RABPage({
@@ -70,7 +70,15 @@ export default async function RABPage({
                 </p>
               </div>
             </div>
-            <RabAddDialog projectId={project.id} />
+            <div className="flex items-center gap-2">
+              <Button asChild variant="outline">
+                <a href={`/api/owner/projects/${project.id}/rab/export`}>
+                  <Download className="mr-2 h-4 w-4" />
+                  Download Excel
+                </a>
+              </Button>
+              <RabAddDialog projectId={project.id} />
+            </div>
           </div>
 
           {rabs.length === 0 && cashflows.length === 0 ? (

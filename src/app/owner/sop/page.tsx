@@ -13,18 +13,17 @@ export default function SOPPage() {
   const externalResources = [
     {
       category: 'SOP & Guidelines',
-      title: 'Kumpulan SOP Event Organizer',
+      title: 'Kumpulan SOP Contractor',
       description:
-        'Akses lengkap ke Standar Operasional Prosedur untuk berbagai jenis event.',
-      link: 'https://drive.google.com/drive/folders/1eDnIpqzqoAT_UCP5uRA9eG1DSAVBmXCb?usp=drive_link',
+        'Akses lengkap ke Standar Operasional Prosedur untuk berbagai jenis project.',
+      link: 'https://drive.google.com/drive/folders/16xLQ4qSHaa_ErJziat5bih9h2mK2BW-K?usp=drive_link',
       icon: BookOpen,
     },
     {
-      category: 'Templates & Documents',
-      title: 'Template Dokumen Event',
-      description:
-        'Koleksi template proposal, kontrak, rundown, dan dokumen penting lainnya.',
-      link: 'https://drive.google.com/drive/folders/1MhjUSGWAXVRQXwVbKOyMqHA92TFWCdBa?usp=drive_link',
+      category: 'Panduan',
+      title: 'Dokumen Panduan Contractor',
+      description: 'Koleksi panduan untuk project contractor.',
+      link: 'https://drive.google.com/drive/folders/1Gq0Ri8oGpynXat6Avp4uzdkRXDHLJFmy?usp=sharing',
       icon: FileText,
     },
   ];
@@ -62,10 +61,7 @@ export default function SOPPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Button
-                    className="w-full"
-                    asChild
-                  >
+                  <Button className="w-full" asChild>
                     <Link
                       href={resource.link}
                       target="_blank"
@@ -86,9 +82,9 @@ export default function SOPPage() {
             <span>💡</span> Info Penting
           </h3>
           <p className="text-yellow-700 text-sm">
-            Dokumen-dokumen ini tersimpan di Google Drive eksternal. Pastikan Anda
-            login ke akun Google Anda untuk mengaksesnya. Jika Anda tidak memiliki
-            akses, silakan hubungi administrator.
+            Dokumen-dokumen ini tersimpan di Google Drive eksternal. Pastikan
+            Anda login ke akun Google Anda untuk mengaksesnya. Jika Anda tidak
+            memiliki akses, silakan hubungi administrator.
           </p>
         </div>
       </main>
