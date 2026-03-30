@@ -97,13 +97,7 @@ export async function POST(req: NextRequest) {
     let ownerId = null
     if (role === "OWNER") {
       const owner = await prisma.owner.create({
-        data: {
-          companyName: "",
-          ownerName: "",
-          email: "",
-          phone: "",
-          address: "",
-        },
+        data: {},
       })
       ownerId = owner.id
     }
