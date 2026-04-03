@@ -6,13 +6,14 @@ import { z } from "zod"
 
 const cashflowSchema = z.object({
   type: z.nativeEnum(CashflowType),
-  amount: z.number().min(0.01, "Jumlah harus lebih dari 0"),
+  amount: z.number().min(0.01, "Jumlah harus lebih dari 0").max(999999999999999.99, "Jumlah terlalu besar (maksimum Rp 999.999.999.999.999,99)"),
+  date: z.string().nullable().optional(),
   description: z.string().optional(),
   category: z.string().optional(),
   projectId: z.string().nullable().optional(),
-  quantity: z.number().optional(),
+  quantity: z.number().max(99999999.99, "Qty terlalu besar (maksimum 99.999.999,99)").optional(),
   unit: z.string().optional(),
-  unitPrice: z.number().optional(),
+  unitPrice: z.number().max(999999999999999.99, "Harga per qty terlalu besar (maksimum Rp 999.999.999.999.999,99)").optional(),
 })
 
 export async function POST(req: NextRequest) {
@@ -28,6 +29,10 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json()
     const validatedData = cashflowSchema.parse(body)
+    const createdAt =
+      validatedData.date && validatedData.date.length > 0
+        ? new Date(`${validatedData.date}T00:00:00`)
+        : undefined
 
     // If projectId is provided, verify it belongs to owner
     if (validatedData.projectId) {
@@ -75,11 +80,12 @@ export async function POST(req: NextRequest) {
         quantity: validatedData.quantity,
         unit: validatedData.unit,
         unitPrice: validatedData.unitPrice,
+        ...(createdAt ? { createdAt } : {}),
       },
     })
 
     return NextResponse.json({ success: true, cashflow })
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { message: error.errors[0].message },
@@ -87,8 +93,10 @@ export async function POST(req: NextRequest) {
       )
     }
 
+    const errorMessage =
+      error instanceof Error ? error.message : "Internal server error"
     return NextResponse.json(
-      { message: error.message || "Internal server error" },
+      { message: errorMessage },
       { status: 500 }
     )
   }
@@ -125,9 +133,11 @@ export async function GET(req: NextRequest) {
     })
 
     return NextResponse.json({ success: true, cashflows })
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorMessage =
+      error instanceof Error ? error.message : "Internal server error"
     return NextResponse.json(
-      { message: error.message || "Internal server error" },
+      { message: errorMessage },
       { status: 500 }
     )
   }

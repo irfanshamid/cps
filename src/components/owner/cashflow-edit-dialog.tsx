@@ -52,9 +52,12 @@ export function CashflowEditDialog({ cashflow, open, onOpenChange }: CashflowEdi
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [projects, setProjects] = useState<ProjectOption[]>([])
+  const MAX_MONEY = 999999999999999.99
+  const MAX_QTY = 99999999.99
   const [form, setForm] = useState({
     projectId: "none",
     category: "",
+    date: "",
     itemName: "",
     quantity: "1",
     unit: "",
@@ -86,6 +89,7 @@ export function CashflowEditDialog({ cashflow, open, onOpenChange }: CashflowEdi
       setForm({
         projectId: cashflow.projectId || "none",
         category: cashflow.category || "",
+        date: cashflow.createdAt ? new Date(cashflow.createdAt).toISOString().slice(0, 10) : "",
         itemName: cashflow.description || "",
         quantity: cashflow.quantity ? String(cashflow.quantity) : "1",
         unit: cashflow.unit || "",
@@ -98,6 +102,30 @@ export function CashflowEditDialog({ cashflow, open, onOpenChange }: CashflowEdi
     e.preventDefault()
     if (!qty || !unitPrice) {
       toast.error("Qty dan harga per qty wajib diisi")
+      return
+    }
+    if (!Number.isFinite(qty) || qty <= 0) {
+      toast.error("Qty tidak valid")
+      return
+    }
+    if (!Number.isFinite(unitPrice) || unitPrice <= 0) {
+      toast.error("Harga per qty tidak valid")
+      return
+    }
+    if (qty > MAX_QTY) {
+      toast.error("Qty terlalu besar (maksimum 99.999.999,99)")
+      return
+    }
+    if (unitPrice > MAX_MONEY) {
+      toast.error("Harga per qty terlalu besar (maksimum Rp 999.999.999.999.999,99)")
+      return
+    }
+    if (!Number.isFinite(total) || total <= 0) {
+      toast.error("Total tidak valid")
+      return
+    }
+    if (total > MAX_MONEY) {
+      toast.error("Total transaksi terlalu besar (maksimum Rp 999.999.999.999.999,99)")
       return
     }
 
@@ -114,6 +142,7 @@ export function CashflowEditDialog({ cashflow, open, onOpenChange }: CashflowEdi
           amount: total,
           description: form.itemName,
           category: form.category || undefined,
+          date: form.date || null,
           quantity: qty,
           unit: form.unit || undefined,
           unitPrice: unitPrice,
@@ -129,8 +158,10 @@ export function CashflowEditDialog({ cashflow, open, onOpenChange }: CashflowEdi
       toast.success("Transaksi cashflow berhasil diupdate")
       onOpenChange(false)
       router.refresh()
-    } catch (error: any) {
-      toast.error(error.message || "Terjadi kesalahan")
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Terjadi kesalahan"
+      toast.error(errorMessage)
     } finally {
       setLoading(false)
     }
@@ -199,6 +230,17 @@ export function CashflowEditDialog({ cashflow, open, onOpenChange }: CashflowEdi
           </div>
 
           <div className="space-y-2">
+            <Label htmlFor="cf-date-edit">Tanggal (Opsional)</Label>
+            <Input
+              id="cf-date-edit"
+              type="date"
+              value={form.date}
+              onChange={(e) => setForm((f) => ({ ...f, date: e.target.value }))}
+              disabled={loading}
+            />
+          </div>
+
+          <div className="space-y-2">
             <Label htmlFor="cf-item-edit">Nama Item *</Label>
             <Input
               id="cf-item-edit"
@@ -240,7 +282,7 @@ export function CashflowEditDialog({ cashflow, open, onOpenChange }: CashflowEdi
                 id="cf-unit-price-edit"
                 type="number"
                 min="0"
-                step="1000"
+                step="1"
                 value={form.unitPrice}
                 onChange={(e) => setForm((f) => ({ ...f, unitPrice: e.target.value }))}
                 required

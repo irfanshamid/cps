@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Header } from '@/components/layout/header';
 import {
   Card,
   CardContent,
@@ -70,7 +69,6 @@ export default function NewProjectPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header />
       <main className="container mx-auto p-6">
         <div className="mb-6">
           <h1 className="text-3xl font-bold">Tambah Proyek Baru</h1>

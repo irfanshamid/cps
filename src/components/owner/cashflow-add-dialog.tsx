@@ -50,9 +50,12 @@ export function CashflowAddDialog({ defaultProjectId }: CashflowAddDialogProps) 
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [projects, setProjects] = useState<ProjectOption[]>([])
+  const MAX_MONEY = 999999999999999.99
+  const MAX_QTY = 99999999.99
   const [form, setForm] = useState({
     projectId: defaultProjectId ?? "none",
     category: "",
+    date: "",
     itemName: "",
     quantity: "1",
     unit: "",
@@ -84,6 +87,30 @@ export function CashflowAddDialog({ defaultProjectId }: CashflowAddDialogProps) 
       toast.error("Qty dan harga per qty wajib diisi")
       return
     }
+    if (!Number.isFinite(qty) || qty <= 0) {
+      toast.error("Qty tidak valid")
+      return
+    }
+    if (!Number.isFinite(unitPrice) || unitPrice <= 0) {
+      toast.error("Harga per qty tidak valid")
+      return
+    }
+    if (qty > MAX_QTY) {
+      toast.error("Qty terlalu besar (maksimum 99.999.999,99)")
+      return
+    }
+    if (unitPrice > MAX_MONEY) {
+      toast.error("Harga per qty terlalu besar (maksimum Rp 999.999.999.999.999,99)")
+      return
+    }
+    if (!Number.isFinite(total) || total <= 0) {
+      toast.error("Total tidak valid")
+      return
+    }
+    if (total > MAX_MONEY) {
+      toast.error("Total pengeluaran terlalu besar (maksimum Rp 999.999.999.999.999,99)")
+      return
+    }
 
     setLoading(true)
 
@@ -96,6 +123,7 @@ export function CashflowAddDialog({ defaultProjectId }: CashflowAddDialogProps) 
           amount: total,
           description: form.itemName,
           category: form.category || undefined,
+          date: form.date || null,
           quantity: qty,
           unit: form.unit || undefined,
           projectId:
@@ -113,6 +141,7 @@ export function CashflowAddDialog({ defaultProjectId }: CashflowAddDialogProps) 
       setForm({
         projectId: defaultProjectId ?? "none",
         category: "",
+        date: "",
         itemName: "",
         quantity: "1",
         unit: "",
@@ -120,8 +149,10 @@ export function CashflowAddDialog({ defaultProjectId }: CashflowAddDialogProps) 
       })
       setOpen(false)
       router.refresh()
-    } catch (error: any) {
-      toast.error(error.message || "Terjadi kesalahan")
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Terjadi kesalahan"
+      toast.error(errorMessage)
     } finally {
       setLoading(false)
     }
@@ -199,6 +230,17 @@ export function CashflowAddDialog({ defaultProjectId }: CashflowAddDialogProps) 
           </div>
 
           <div className="space-y-2">
+            <Label htmlFor="cf-date">Tanggal (Opsional)</Label>
+            <Input
+              id="cf-date"
+              type="date"
+              value={form.date}
+              onChange={(e) => setForm((f) => ({ ...f, date: e.target.value }))}
+              disabled={loading}
+            />
+          </div>
+
+          <div className="space-y-2">
             <Label htmlFor="cf-item">Nama Item *</Label>
             <Input
               id="cf-item"
@@ -240,7 +282,7 @@ export function CashflowAddDialog({ defaultProjectId }: CashflowAddDialogProps) 
                 id="cf-unit-price"
                 type="number"
                 min="0"
-                step="1000"
+                step="1"
                 value={form.unitPrice}
                 onChange={(e) => setForm((f) => ({ ...f, unitPrice: e.target.value }))}
                 required
@@ -271,4 +313,3 @@ export function CashflowAddDialog({ defaultProjectId }: CashflowAddDialogProps) 
     </Dialog>
   )
 }
-

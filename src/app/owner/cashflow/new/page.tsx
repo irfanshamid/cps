@@ -1,87 +1,115 @@
-"use client"
+'use client';
 
-import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
-import { Header } from "@/components/layout/header"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { Header } from '@/components/layout/header';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
-import { toast } from "sonner"
-import { Loader2 } from "lucide-react"
+} from '@/components/ui/select';
+import { toast } from 'sonner';
+import { Loader2 } from 'lucide-react';
 
 interface Project {
-  id: string
-  name: string
+  id: string;
+  name: string;
 }
 
 export default function NewCashflowPage() {
-  const router = useRouter()
-  const [loading, setLoading] = useState(false)
-  const [projects, setProjects] = useState<Project[]>([])
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const MAX_MONEY = 999999999999999.99;
+  const MAX_QTY = 99999999.99;
   const [formData, setFormData] = useState({
-    type: "IN" as "IN" | "OUT",
-    amount: "",
-    description: "",
-    category: "",
-    projectId: "",
-    quantity: "1",
-    unit: "",
-  })
+    type: 'IN' as 'IN' | 'OUT',
+    amount: '',
+    date: '',
+    description: '',
+    category: '',
+    projectId: '',
+    quantity: '1',
+    unit: '',
+  });
 
   useEffect(() => {
     // Fetch projects
-    fetch("/api/owner/projects")
+    fetch('/api/owner/projects')
       .then((res) => res.json())
       .then((data) => {
         if (data.success) {
-          setProjects(data.projects || [])
+          setProjects(data.projects || []);
         }
       })
       .catch(() => {
-        toast.error("Gagal memuat daftar proyek")
-      })
-  }, [])
+        toast.error('Gagal memuat daftar proyek');
+      });
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
+    e.preventDefault();
+    setLoading(true);
 
     try {
-      const response = await fetch("/api/owner/cashflow", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...formData,
-          amount: parseFloat(formData.amount) || 0,
-          quantity: parseFloat(formData.quantity) || 0,
-          unit: formData.unit || undefined,
-          projectId: formData.projectId || null,
-        }),
-      })
+      const amount = parseFloat(formData.amount) || 0;
+      const quantity = parseFloat(formData.quantity) || 0;
 
-      if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.message || "Gagal menambah transaksi")
+      if (!Number.isFinite(amount) || amount <= 0) {
+        throw new Error('Jumlah harus lebih dari 0');
+      }
+      if (amount > MAX_MONEY) {
+        throw new Error('Jumlah terlalu besar (maksimum Rp 999.999.999.999.999,99)');
+      }
+      if (!Number.isFinite(quantity) || quantity < 0) {
+        throw new Error('Qty tidak valid');
+      }
+      if (quantity > MAX_QTY) {
+        throw new Error('Qty terlalu besar (maksimum 99.999.999,99)');
       }
 
-      toast.success("Transaksi berhasil ditambahkan!")
-      router.push("/owner/cashflow")
-      router.refresh()
-    } catch (error: any) {
-      toast.error(error.message || "Terjadi kesalahan")
+      const response = await fetch('/api/owner/cashflow', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...formData,
+          amount,
+          quantity,
+          unit: formData.unit || undefined,
+          projectId: formData.projectId || null,
+          date: formData.date || null,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Gagal menambah transaksi');
+      }
+
+      toast.success('Transaksi berhasil ditambahkan!');
+      router.push('/owner/cashflow');
+      router.refresh();
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Terjadi kesalahan';
+      toast.error(errorMessage);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -97,9 +125,7 @@ export default function NewCashflowPage() {
         <Card>
           <CardHeader>
             <CardTitle>Form Transaksi</CardTitle>
-            <CardDescription>
-              Isi detail transaksi Anda
-            </CardDescription>
+            <CardDescription>Isi detail transaksi Anda</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -108,7 +134,7 @@ export default function NewCashflowPage() {
                 <Select
                   value={formData.type}
                   onValueChange={(value) =>
-                    setFormData({ ...formData, type: value as "IN" | "OUT" })
+                    setFormData({ ...formData, type: value as 'IN' | 'OUT' })
                   }
                   disabled={loading}
                 >
@@ -149,6 +175,19 @@ export default function NewCashflowPage() {
                     placeholder="Unit"
                   />
                 </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="date">Tanggal (Opsional)</Label>
+                <Input
+                  id="date"
+                  type="date"
+                  value={formData.date}
+                  onChange={(e) =>
+                    setFormData({ ...formData, date: e.target.value })
+                  }
+                  disabled={loading}
+                />
               </div>
 
               <div className="space-y-2">
@@ -196,9 +235,12 @@ export default function NewCashflowPage() {
               <div className="space-y-2">
                 <Label htmlFor="projectId">Proyek (Opsional)</Label>
                 <Select
-                  value={formData.projectId || "none"}
+                  value={formData.projectId || 'none'}
                   onValueChange={(value) =>
-                    setFormData({ ...formData, projectId: value === "none" ? "" : value })
+                    setFormData({
+                      ...formData,
+                      projectId: value === 'none' ? '' : value,
+                    })
                   }
                   disabled={loading}
                 >
@@ -232,7 +274,7 @@ export default function NewCashflowPage() {
                       Menyimpan...
                     </>
                   ) : (
-                    "Simpan Transaksi"
+                    'Simpan Transaksi'
                   )}
                 </Button>
               </div>
@@ -241,5 +283,5 @@ export default function NewCashflowPage() {
         </Card>
       </main>
     </div>
-  )
+  );
 }
