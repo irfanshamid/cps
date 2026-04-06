@@ -8,13 +8,13 @@ const rabSchema = z.object({
   name: z.string().min(1, "Nama item wajib diisi"),
   description: z.string().optional(),
   category: z.string().min(1, "Kategori wajib diisi"),
-  quantity: z.number().min(0.01, "Qty wajib diisi"),
+  quantity: z.number().min(0.01, "Qty wajib diisi").max(99999999.99, "Qty terlalu besar (maksimum 99.999.999,99)"),
   unit: z.string().optional(),
   frequency: z.string().optional(),
-  budget: z.number().min(0, "Budget harus lebih dari 0"),
-  unitPrice: z.number().min(0).optional(),
-  realUnitPrice: z.number().min(0).optional(),
-  realAmount: z.number().min(0).optional(),
+  budget: z.number().min(0, "Budget harus lebih dari 0").max(999999999999999.99, "Total Budget (RAB) terlalu besar (maksimum Rp 999.999.999.999.999,99)"),
+  unitPrice: z.number().min(0).max(999999999999999.99, "Harga Satuan (RAB) terlalu besar (maksimum Rp 999.999.999.999.999,99)").optional(),
+  realUnitPrice: z.number().min(0).max(999999999999999.99, "Harga Satuan (Realistis) terlalu besar (maksimum Rp 999.999.999.999.999,99)").optional(),
+  realAmount: z.number().min(0).max(999999999999999.99, "Total Realistis terlalu besar (maksimum Rp 999.999.999.999.999,99)").optional(),
   remarks: z.string().optional(),
 })
 
@@ -78,7 +78,7 @@ export async function POST(
     })
 
     return NextResponse.json({ success: true, rab })
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { message: error.errors[0].message },
@@ -86,8 +86,10 @@ export async function POST(
       )
     }
 
+    const errorMessage =
+      error instanceof Error ? error.message : "Internal server error"
     return NextResponse.json(
-      { message: error.message || "Internal server error" },
+      { message: errorMessage },
       { status: 500 }
     )
   }
@@ -118,9 +120,11 @@ export async function GET(
     })
 
     return NextResponse.json({ success: true, rabs })
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorMessage =
+      error instanceof Error ? error.message : "Internal server error"
     return NextResponse.json(
-      { message: error.message || "Internal server error" },
+      { message: errorMessage },
       { status: 500 }
     )
   }
