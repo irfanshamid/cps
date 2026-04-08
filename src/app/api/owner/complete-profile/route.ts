@@ -3,7 +3,15 @@ import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { z } from "zod"
 
-const profileSchema = z.object({
+const commonSchema = z.object({
+  companyName: z.string().optional(),
+  ownerName: z.string().optional(),
+  email: z.string().email("Email tidak valid").optional(),
+  phone: z.string().optional(),
+  address: z.string().optional(),
+})
+
+const ownerRequiredSchema = z.object({
   companyName: z.string().min(1, "Nama perusahaan wajib diisi"),
   ownerName: z.string().min(1, "Nama owner wajib diisi"),
   email: z.string().email("Email tidak valid"),
@@ -23,23 +31,24 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json()
-    const validatedData = profileSchema.parse(body)
+    const validatedData = commonSchema.parse(body)
 
     // Handle OWNER role (update owner profile)
     if (String(session.user.role) === "OWNER") {
+      const ownerData = ownerRequiredSchema.parse(body)
       let ownerId = session.user.ownerId
 
       // If ownerId is missing, create it now
       if (!ownerId) {
-        const owner = await prisma.owner.create({
-          data: {
-            companyName: validatedData.companyName,
-            ownerName: validatedData.ownerName,
-            email: validatedData.email,
-            phone: validatedData.phone,
-            address: validatedData.address,
-          },
-        })
+         const owner = await prisma.owner.create({
+           data: {
+             companyName: ownerData.companyName,
+             ownerName: ownerData.ownerName,
+             email: ownerData.email,
+             phone: ownerData.phone,
+             address: ownerData.address,
+           },
+         })
         ownerId = owner.id
         
         // Link user to this new owner
@@ -51,25 +60,25 @@ export async function POST(req: NextRequest) {
         await prisma.owner.upsert({
           where: { id: ownerId },
           update: {
-            companyName: validatedData.companyName,
-            ownerName: validatedData.ownerName,
-            email: validatedData.email,
-            phone: validatedData.phone,
-            address: validatedData.address,
+             companyName: ownerData.companyName,
+             ownerName: ownerData.ownerName,
+             email: ownerData.email,
+             phone: ownerData.phone,
+             address: ownerData.address,
           },
           create: {
             id: ownerId,
-            companyName: validatedData.companyName,
-            ownerName: validatedData.ownerName,
-            email: validatedData.email,
-            phone: validatedData.phone,
-            address: validatedData.address,
+             companyName: ownerData.companyName,
+             ownerName: ownerData.ownerName,
+             email: ownerData.email,
+             phone: ownerData.phone,
+             address: ownerData.address,
           },
         })
       }
     }
 
-    // Update user to mark profile as complete for ALL roles
+     // Update user to mark profile as complete for ALL roles
     const updatedUser = await prisma.user.update({
       where: { id: session.user.id },
       data: { mustCompleteProfile: false },
